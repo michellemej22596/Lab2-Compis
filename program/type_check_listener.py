@@ -50,3 +50,23 @@ class TypeCheckListener(SimpleLangListener):
     if isinstance(left_type, (IntType, FloatType)) and isinstance(right_type, (IntType, FloatType)):
       return True
     return False
+
+  def exitAddSub(self, ctx: SimpleLangParser.AddSubContext):
+      left_type = self.types[ctx.expr(0)]
+      right_type = self.types[ctx.expr(1)]
+      if isinstance(left_type, StringType) and isinstance(right_type, IntType):
+          self.errors.append(f"Cannot add a string and an integer.")
+      self.types[ctx] = FloatType() if isinstance(left_type, FloatType) or isinstance(right_type, FloatType) else IntType()
+
+  def exitMulDiv(self, ctx: SimpleLangParser.MulDivContext):
+    left_type = self.types[ctx.expr(0)]
+    right_type = self.types[ctx.expr(1)]
+    if isinstance(left_type, BoolType) or isinstance(right_type, BoolType):
+        self.errors.append(f"Cannot perform arithmetic operations with booleans.")
+    self.types[ctx] = FloatType() if isinstance(left_type, FloatType) or isinstance(right_type, FloatType) else IntType()
+
+  def exitVarDeclaration(self, ctx: SimpleLangParser.VarDeclarationContext):
+    var_name = ctx.ID().getText()
+    if var_name not in self.types:
+        self.errors.append(f"Variable {var_name} is used before it is declared.")
+    self.types[ctx] = self.types.get(var_name, None)

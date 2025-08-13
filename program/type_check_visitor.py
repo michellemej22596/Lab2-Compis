@@ -36,3 +36,23 @@ class TypeCheckVisitor(SimpleLangVisitor):
 
   def visitParens(self, ctx: SimpleLangParser.ParensContext):
     return self.visit(ctx.expr())
+
+  def visitAddSub(self, ctx: SimpleLangParser.AddSubContext):
+      left_type = self.visit(ctx.expr(0))
+      right_type = self.visit(ctx.expr(1))
+      if isinstance(left_type, StringType) and isinstance(right_type, IntType):
+          raise TypeError(f"Cannot add a string and an integer.")
+      return FloatType() if isinstance(left_type, FloatType) or isinstance(right_type, FloatType) else IntType()
+
+  def visitMulDiv(self, ctx: SimpleLangParser.MulDivContext):
+    left_type = self.visit(ctx.expr(0))
+    right_type = self.visit(ctx.expr(1))
+    if isinstance(left_type, BoolType) or isinstance(right_type, BoolType):
+        raise TypeError(f"Cannot perform arithmetic operations with booleans.")
+    return FloatType() if isinstance(left_type, FloatType) or isinstance(right_type, FloatType) else IntType()
+
+  def visitVarDeclaration(self, ctx: SimpleLangParser.VarDeclarationContext):
+    var_name = ctx.ID().getText()
+    if var_name not in self.types:
+        raise TypeError(f"Variable {var_name} is used before it is declared.")
+    return self.types.get(var_name, None)
